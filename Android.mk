@@ -8,6 +8,7 @@ LOCAL_INCLUDES += $(LOCAL_PATH)
 LOCAL_CFLAGS += \
     -DAPF_FRAME_HEADER_SIZE=14 \
     -std=c99 \
+    -Wall \
     -Werror
 
 LOCAL_SRC_FILES += apf_interpreter.c
