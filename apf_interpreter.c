@@ -192,9 +192,9 @@ int accept_packet(const uint8_t* program, uint32_t program_len,
                   const uint8_t* packet, uint32_t packet_len,
                   uint32_t filter_age) {
 // Is offset within program bounds?
-#define IN_PROGRAM_BOUNDS(p) (ENFORCE_UNSIGNED(p), (p) < program_len)
+#define IN_PROGRAM_BOUNDS(p) (ENFORCE_UNSIGNED(p) && (p) < program_len)
 // Is offset within packet bounds?
-#define IN_PACKET_BOUNDS(p) (ENFORCE_UNSIGNED(p), (p) < packet_len)
+#define IN_PACKET_BOUNDS(p) (ENFORCE_UNSIGNED(p) && (p) < packet_len)
 // Accept packet if not within program bounds
 #define ASSERT_IN_PROGRAM_BOUNDS(p) ASSERT_RETURN(IN_PROGRAM_BOUNDS(p))
 // Accept packet if not within packet bounds
@@ -380,7 +380,7 @@ int accept_packet(const uint8_t* program, uint32_t program_len,
 // If LDM_EXT_OPCODE is 0 and imm is compared with it, a compiler error will result,
 // instead just enforce that imm is unsigned (so it's always greater or equal to 0).
 #if LDM_EXT_OPCODE == 0
-                  ENFORCE_UNSIGNED(imm),
+                  ENFORCE_UNSIGNED(imm) &&
 #else
                   imm >= LDM_EXT_OPCODE &&
 #endif
