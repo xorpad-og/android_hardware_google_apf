@@ -240,7 +240,8 @@ int accept_packet(const uint8_t* program, uint32_t program_len,
       if (len_field != 0) {
           const uint32_t imm_len = 1 << (len_field - 1);
           ASSERT_FORWARD_IN_PROGRAM(pc + imm_len - 1);
-          for (uint32_t i = 0; i < imm_len; i++)
+          uint32_t i;
+          for (i = 0; i < imm_len; i++)
               imm = (imm << 8) | program[pc++];
           // Sign extend imm into signed_imm.
           signed_imm = imm << ((4 - imm_len) * 8);
@@ -303,7 +304,8 @@ int accept_packet(const uint8_t* program, uint32_t program_len,
               } else if (len_field != 0) {
                   uint32_t cmp_imm_len = 1 << (len_field - 1);
                   ASSERT_FORWARD_IN_PROGRAM(pc + cmp_imm_len - 1);
-                  for (uint32_t i = 0; i < cmp_imm_len; i++)
+                  uint32_t i;
+                  for (i = 0; i < cmp_imm_len; i++)
                       cmp_imm = (cmp_imm << 8) | program[pc++];
               }
               switch (opcode) {
