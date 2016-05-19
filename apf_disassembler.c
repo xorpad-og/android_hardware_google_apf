@@ -52,15 +52,24 @@ static const char* opcode_names [] = {
     [JNEBS_OPCODE] = "jnebs",
 };
 
+static void print_jump_target(uint32_t target, uint32_t program_len) {
+    if (target == program_len) {
+        printf("pass");
+    } else if (target == program_len + 1) {
+        printf("drop");
+    } else {
+        printf("%u", target);
+    }
+}
+
 // Disassembles an APF program. A hex dump of the program is supplied on stdin.
 //
 // NOTE: This is a simple debugging tool not meant for shipping or production use.  It is by no
 //       means hardened against malicious input and contains known vulnerabilities.
 //
 // Example usage:
-// cc apf_disassemlber.c
-// adb shell dumpsys wifi ipmanager | sed '/Last program:/,+1!d;/Last program:/d;s/[ ]*//' | ./a.out
-int main(int argc, char* argv[]) {
+// adb shell dumpsys wifi ipmanager | sed '/Last program:/,+1!d;/Last program:/d;s/[ ]*//' | out/host/linux-x86/bin/apf_disassembler
+int main(void) {
   uint32_t program_len = 0;
   uint8_t program[10000];
 
@@ -70,18 +79,9 @@ int main(int argc, char* argv[]) {
       program[program_len++] = byte;
   }
 
-  // Program counter.
-  uint32_t pc = 0;
-  while (pc < program_len + 2) {
+  for (uint32_t pc = 0; pc < program_len;) {
       printf("%8u: ", pc);
       const uint8_t bytecode = program[pc++];
-      if (pc == (program_len + 1)) {
-          printf("pass\n");
-          continue;
-      } else if (pc == (program_len + 2)) {
-          printf("drop\n");
-          continue;
-      }
       const uint32_t opcode = EXTRACT_OPCODE(bytecode);
 #define PRINT_OPCODE() print_opcode(opcode_names[opcode])
       const uint32_t reg_num = EXTRACT_REGISTER(bytecode);
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
               break;
           case JMP_OPCODE:
               PRINT_OPCODE();
-              printf("%u", pc + imm);
+              print_jump_target(pc + imm, program_len);
               break;
           case JEQ_OPCODE:
           case JNE_OPCODE:
@@ -126,22 +126,23 @@ int main(int argc, char* argv[]) {
               // Load second immediate field.
               uint32_t cmp_imm = 0;
               if (reg_num == 1) {
-                  printf("r1");
+                  printf("r1, ");
               } else if (len_field == 0) {
-                  printf("0");
+                  printf("0, ");
               } else {
                   uint32_t cmp_imm_len = 1 << (len_field - 1);
                   uint32_t i;
                   for (i = 0; i < cmp_imm_len; i++)
                       cmp_imm = (cmp_imm << 8) | program[pc++];
-                  printf("0x%x", cmp_imm);
+                  printf("0x%x, ", cmp_imm);
               }
               if (opcode == JNEBS_OPCODE) {
-                  printf(", %u, ", pc + imm + cmp_imm);
+                  print_jump_target(pc + imm + cmp_imm, program_len);
+                  printf(", ");
                   while (cmp_imm--)
                       printf("%02x", program[pc++]);
               } else {
-                  printf(", %u", pc + imm);
+                  print_jump_target(pc + imm, program_len);
               }
               break;
           }
